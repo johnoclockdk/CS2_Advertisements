@@ -2,16 +2,16 @@ using System.Collections;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Modules.Utils;
 using Nexd.MySQL;
 
 namespace AdvertisementsDatabase;
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "0.1";
+    public override string ModuleVersion => "1.1";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
@@ -31,6 +31,7 @@ public class AdvertisementsDatabase : BasePlugin
 
     [ConsoleCommand("css_adv", "advertisements command")]
     [ConsoleCommand("css_advertisements", "advertisements command")]
+    [RequiresPermissions("@css/slay", "@adv/adv")]
     public void OnCommand(CCSPlayerController? player, CommandInfo command)
     {
         if (player == null && player!.IsValid && player.Connected != PlayerConnectedState.PlayerConnected && !player.PlayerPawn.IsValid) return;
@@ -62,7 +63,6 @@ public class AdvertisementsDatabase : BasePlugin
 
         if (command.ArgByIndex(1) == "add")
         {
-
             if (command.ArgCount >= 3 && command.ArgCount <= 3)
             {
                 g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`) VALUES ('{command.ArgByIndex(2)}');");
@@ -145,7 +145,7 @@ public class AdvertisementsDatabase : BasePlugin
 
     private void Timer_Advertisements()
     {
-        if (g_AdvertisementsList.Count == 0)
+        if (g_AdvertisementsList == null || g_AdvertisementsList.Count < 1)
         {
             Console.WriteLine("No advertisements to display.");
             return;
@@ -154,37 +154,43 @@ public class AdvertisementsDatabase : BasePlugin
         string? CMessage = g_AdvertisementsList[currentAdIndex] as string; // Assuming the list contains strings.
         currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to next ad, reset to 0 at end of list.
 
-        Server.PrintToChatAll($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(CMessage!)}");
+        List<CCSPlayerController> players = Utilities.GetPlayers();
+
+        foreach (CCSPlayerController player in players)
+        {
+            if (player == null && !player!.IsValid && player.Connected != PlayerConnectedState.PlayerConnected && !player.PlayerPawn.IsValid && player.UserId == -1 && player.IsBot) continue;
+
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(CMessage!, player)}");
+        }
     }
 
-    private string ReplaceMessageTags(string message)
+    private string ReplaceMessageTags(string message, CCSPlayerController player)
     {
-        var replacedMessage = message
+        // Replace various tags with corresponding values
+        message = message
             .Replace("{MAP}", NativeAPI.GetMapName())
             .Replace("{TIME}", DateTime.Now.ToString("HH:mm:ss"))
             .Replace("{DATE}", DateTime.Now.ToString("dd.MM.yyyy"))
             .Replace("{SERVERNAME}", ConVar.Find("hostname")!.StringValue)
+            .Replace("{NAME}", player.PlayerName)
+            .Replace("{STEAMID}", player.SteamID.ToString())
             .Replace("{IP}", ConVar.Find("ip")!.StringValue)
             .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString());
 
-        replacedMessage = ReplaceColorTags(replacedMessage);
-
-        return replacedMessage;
-    }
-
-    private string ReplaceColorTags(string message)
-    {
+        // Color patterns and replacements
         string[] colorPatterns =
         {
-            "{DEFAULT}", "{RED}", "{LIGHTPURPLE}", "{GREEN}", "{LIME}", "{LIGHTGREEN}", "{LIGHTRED}", "{GRAY}",
-            "{LIGHTOLIVE}", "{OLIVE}", "{LIGHTBLUE}", "{BLUE}", "{PURPLE}", "{GRAYBLUE}"
-        };
+        "{DEFAULT}", "{RED}", "{LIGHTPURPLE}", "{GREEN}", "{LIME}", "{LIGHTGREEN}",
+        "{LIGHTRED}", "{GRAY}", "{LIGHTOLIVE}", "{OLIVE}", "{LIGHTBLUE}",
+        "{BLUE}", "{PURPLE}", "{GRAYBLUE}"
+    };
         string[] colorReplacements =
         {
-            "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x10", "\x0B", "\x0C", "\x0E",
-            "\x0A"
-        };
+        "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08",
+        "\x09", "\x10", "\x0B", "\x0C", "\x0E", "\x0A"
+    };
 
+        // Replace color tags
         for (var i = 0; i < colorPatterns.Length; i++)
             message = message.Replace(colorPatterns[i], colorReplacements[i]);
 
