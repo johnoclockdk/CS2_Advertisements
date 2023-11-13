@@ -11,7 +11,7 @@ To use this plugin, you need to have the following requirements installed:
 Follow these steps to install the plugin on your CSS server:
 
 1. **Download the Plugin Files:**
-   - Obtain the plugin files from the [GitHub repository](https://github.com/your-repo-url) or the source of your choice.
+   - Obtain the plugin files from the [GitHub repository](https://github.com/johnoclockdk/cs2_Advertisements_Database) or the source of your choice.
    - Ensure you have the latest version of the plugin.
 
 2. **Extract the Downloaded Files:**
