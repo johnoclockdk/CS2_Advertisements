@@ -39,6 +39,7 @@ Example Configuration (`config.json`):
   "DatabaseName": "Advertisements",
   "Timer": "60"
 }
+```
 
 ## Credits
 - **[partiusfabaa](https://github.com/partiusfabaa):** for hes code on Replace Tags and Colors.
