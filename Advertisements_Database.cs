@@ -12,8 +12,8 @@ public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
     public override string ModuleVersion => "0.1";
-    public override string ModuleAuthor => "";
-    public override string ModuleDescription => "";
+    public override string ModuleAuthor => "johnoclock";
+    public override string ModuleDescription => "Display Advertisements from database";
 
     private MySqlDb? g_Db = null;
     ArrayList g_AdvertisementsList = new ArrayList();
