@@ -42,4 +42,4 @@ Example Configuration (`config.json`):
 ```
 
 ## Credits
-- **[partiusfabaa](https://github.com/partiusfabaa):** for hes code on Replace Tags and Colors.
+- **[partiusfabaa](https://github.com/partiusfabaa):** For their valuable contribution to the code related to replacing tags and colors.
