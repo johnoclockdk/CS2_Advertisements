@@ -52,13 +52,14 @@ Color tags can be used to customize text colors in messages. Below is the list o
 
 Message tags are used to dynamically insert specific information into messages. The following tags are available:
 
-- `{MAP}`: Inserts the current map name.
+- `{CURRENTMAP}`: Inserts the current map name.
 - `{TIME}`: Displays the current time in `HH:mm:ss` format.
 - `{DATE}`: Shows the current date in `dd.MM.yyyy` format.
 - `{SERVERNAME}`: Includes the server's hostname.
 - `{NAME}`: Inserts the player's name.
 - `{STEAMID}`: Adds the player's Steam ID.
 - `{IP}`: Shows the server's IP address.
+- `{PLAYERCOUNT}` : Shows the Current player count.
 - `{PORT}`: Includes the server's port number.
 
 
