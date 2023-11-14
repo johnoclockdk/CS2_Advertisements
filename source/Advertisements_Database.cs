@@ -178,23 +178,28 @@ public class AdvertisementsDatabase : BasePlugin
             .Replace("{IP}", ConVar.Find("ip")!.StringValue)
             .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString());
 
-        // Color patterns and replacements
-        string[] colorPatterns =
+        foreach (var pair in colorReplacements)
         {
-        "{DEFAULT}", "{RED}", "{LIGHTPURPLE}", "{GREEN}", "{LIME}", "{LIGHTGREEN}",
-        "{LIGHTRED}", "{GRAY}", "{LIGHTOLIVE}", "{OLIVE}", "{LIGHTBLUE}",
-        "{BLUE}", "{PURPLE}", "{GRAYBLUE}"
-    };
-        string[] colorReplacements =
-        {
-        "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08",
-        "\x09", "\x10", "\x0B", "\x0C", "\x0E", "\x0A"
-    };
-
-        // Replace color tags
-        for (var i = 0; i < colorPatterns.Length; i++)
-            message = message.Replace(colorPatterns[i], colorReplacements[i]);
-
+            message = message.Replace(pair.Key, pair.Value);
+        }
         return message;
     }
+
+    static readonly Dictionary<string, string> colorReplacements = new Dictionary<string, string>
+    {
+        { "{DEFAULT}", "\x01" },
+        { "{RED}", "\x02" },
+        { "{LIGHTPURPLE}", "\x03" },
+        { "{GREEN}", "\x04" },
+        { "{LIME}", "\x05" },
+        { "{LIGHTGREEN}", "\x06" },
+        { "{LIGHTRED}", "\x07" },
+        { "{GRAY}", "\x08" },
+        { "{LIGHTOLIVE}", "\x09" },
+        { "{OLIVE}", "\x10" },
+        { "{LIGHTBLUE}", "\x0B" },
+        { "{BLUE}", "\x0C" },
+        { "{PURPLE}", "\x0E" },
+        { "{GRAYBLUE}", "\x0A" }
+    };
 }
