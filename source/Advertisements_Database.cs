@@ -22,7 +22,7 @@ public class AdvertisementsDatabase : BasePlugin
     {
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
-        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,PRIMARY KEY (`id`));").Result);
+        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL ,PRIMARY KEY (`id`));").Result);
 
         GetAdvertisements();
 
@@ -54,18 +54,19 @@ public class AdvertisementsDatabase : BasePlugin
             {
                 // Assuming 'id' is the column name for the ID in your database
                 string id = pair.Value["id"]!.ToString();
+                string location = pair.Value["location"]!.ToString();
                 string message = pair.Value["message"]!.ToString();
 
                 // Print both ID and message to the console
-                player.PrintToConsole("ID: " + id + ", Message: " + message + "\n");
+                player.PrintToConsole("ID: " + id + ", Message: " + message + "Location" + location + "\n");
             }
         }
 
         if (command.ArgByIndex(1) == "add")
         {
-            if (command.ArgCount >= 3 && command.ArgCount <= 3)
+            if (command.ArgCount >= 4 && command.ArgCount <= 4)
             {
-                g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`) VALUES ('{command.ArgByIndex(2)}');");
+                g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`, `location`) VALUES ('{command.ArgByIndex(2)}', '{command.ArgByIndex(3)}');");
 
                 ReloadAdvertisements();
 
@@ -73,7 +74,7 @@ public class AdvertisementsDatabase : BasePlugin
             }
             else
             {
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message>");
+                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message> <location>");
             }
         }
 
@@ -122,20 +123,24 @@ public class AdvertisementsDatabase : BasePlugin
         g_AdvertisementsList.Clear();
 
         var results = g_Db!.ExecuteQuery("select * from advertisements");
-
         foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
         {
-            g_AdvertisementsList.Add(pair.Value["message"]);
+            string message = pair.Value["message"]!.ToString();
+            string location = pair.Value["location"]!.ToString();
+
+            g_AdvertisementsList.Add(new Advertisement(message, location));
         }
     }
 
     private void GetAdvertisements()
     {
         var results = g_Db!.ExecuteQuery("select * from advertisements");
-
         foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
         {
-            g_AdvertisementsList.Add(pair.Value["message"]);
+            string message = pair.Value["message"]!.ToString();
+            string location = pair.Value["location"]!.ToString();
+
+            g_AdvertisementsList.Add(new Advertisement(message, location));
         }
 
         base.AddTimer(Cfg.Config.Timer, Timer_Advertisements, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
@@ -151,16 +156,29 @@ public class AdvertisementsDatabase : BasePlugin
             return;
         }
 
-        string? CMessage = g_AdvertisementsList[currentAdIndex] as string; // Assuming the list contains strings.
-        currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to next ad, reset to 0 at end of list.
+        List<CCSPlayerController> players = Utilities.GetPlayers();
 
-        List<CCSPlayerController> count = Utilities.GetPlayers();
-
-        foreach (CCSPlayerController player in count)
+        foreach (CCSPlayerController player in players)
         {
-            if (player == null && !player!.IsValid && player.Connected != PlayerConnectedState.PlayerConnected && !player.PlayerPawn.IsValid && player.UserId == -1 && player.IsBot) continue;
+            if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot) continue;
 
-            player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(CMessage!, player)}");
+            Advertisement advertisement = (Advertisement)g_AdvertisementsList[currentAdIndex]!;
+
+            if (advertisement.Location == "chat")
+            {
+                // Handle advertisements with location "chat"
+                player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
+            }
+            else if (advertisement.Location == "center")
+            {
+                player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
+            }
+            else if (advertisement.Location == "panel")
+            {
+                // Handle advertisements with location "panel" (if needed)
+            }
+
+            currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
         }
     }
 
@@ -202,4 +220,16 @@ public class AdvertisementsDatabase : BasePlugin
         { "{PURPLE}", "\x0E" },
         { "{GRAYBLUE}", "\x0A" }
     };
+}
+
+public class Advertisement
+{
+    public string Message { get; set; }
+    public string Location { get; set; }
+
+    public Advertisement(string message, string location)
+    {
+        Message = message;
+        Location = location;
+    }
 }
