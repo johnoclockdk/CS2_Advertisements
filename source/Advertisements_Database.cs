@@ -11,7 +11,7 @@ namespace AdvertisementsDatabase;
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "1.1";
+    public override string ModuleVersion => "1.2";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
@@ -154,9 +154,9 @@ public class AdvertisementsDatabase : BasePlugin
         string? CMessage = g_AdvertisementsList[currentAdIndex] as string; // Assuming the list contains strings.
         currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to next ad, reset to 0 at end of list.
 
-        List<CCSPlayerController> players = Utilities.GetPlayers();
+        List<CCSPlayerController> count = Utilities.GetPlayers();
 
-        foreach (CCSPlayerController player in players)
+        foreach (CCSPlayerController player in count)
         {
             if (player == null && !player!.IsValid && player.Connected != PlayerConnectedState.PlayerConnected && !player.PlayerPawn.IsValid && player.UserId == -1 && player.IsBot) continue;
 
@@ -168,12 +168,13 @@ public class AdvertisementsDatabase : BasePlugin
     {
         // Replace various tags with corresponding values
         message = message
-            .Replace("{MAP}", NativeAPI.GetMapName())
+            .Replace("{CURRENTMAP}", NativeAPI.GetMapName())
             .Replace("{TIME}", DateTime.Now.ToString("HH:mm:ss"))
             .Replace("{DATE}", DateTime.Now.ToString("dd.MM.yyyy"))
             .Replace("{SERVERNAME}", ConVar.Find("hostname")!.StringValue)
             .Replace("{NAME}", player.PlayerName)
             .Replace("{STEAMID}", player.SteamID.ToString())
+            .Replace("{PLAYERCOUNT}", Utilities.GetPlayers().Count.ToString())
             .Replace("{IP}", ConVar.Find("ip")!.StringValue)
             .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString());
 

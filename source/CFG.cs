@@ -2,13 +2,11 @@
 using System.Reflection;
 using System.Text.Json;
 
-
 namespace AdvertisementsDatabase;
 
 internal class Cfg
 {
     public static Config Config = new();
-
 
     /// <summary>
     /// Checks the configuration file for the module and creates it if it does not exist.
@@ -27,17 +25,17 @@ internal class Cfg
         using (StreamReader sr = new(fs))
         {
             // Deserialize the JSON from the file and load the configuration.
-            Config = JsonSerializer.Deserialize<Config>(sr.ReadToEnd());
+            Config = JsonSerializer.Deserialize<Config>(sr.ReadToEnd())!;
         }
 
-        foreach (PropertyInfo prop in Config.GetType().GetProperties())
+        foreach (PropertyInfo prop in Config!.GetType().GetProperties())
         {
             if (prop.PropertyType != typeof(string))
             {
                 continue;
             }
 
-            prop.SetValue(Config, ModifyColorValue(prop.GetValue(Config).ToString()));
+            prop.SetValue(Config, ModifyColorValue(prop.GetValue(Config)!.ToString()!));
         }
     }
 
@@ -89,7 +87,7 @@ internal class Cfg
             string pattern = $"{{{field.Name}}}";
             if (msg.Contains(pattern, StringComparison.OrdinalIgnoreCase))
             {
-                modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null).ToString(), StringComparison.OrdinalIgnoreCase);
+                modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null)!.ToString(), StringComparison.OrdinalIgnoreCase);
             }
         }
         return modifiedValue;
