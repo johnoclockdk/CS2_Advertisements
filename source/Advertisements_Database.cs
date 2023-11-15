@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
@@ -22,7 +23,7 @@ public class AdvertisementsDatabase : BasePlugin
     {
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
-        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL ,PRIMARY KEY (`id`));").Result);
+        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL, `server` VARCHAR(128) ,PRIMARY KEY (`id`));").Result);
 
         GetAdvertisements();
 
@@ -34,7 +35,7 @@ public class AdvertisementsDatabase : BasePlugin
     [RequiresPermissions("@css/slay", "@adv/adv")]
     public void OnCommand(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null && player!.IsValid && player.Connected != PlayerConnectedState.PlayerConnected && !player.PlayerPawn.IsValid) return;
+        if (!ValidClient(player)) return;
 
         if (command.ArgCount == 1)
         {
@@ -60,54 +61,57 @@ public class AdvertisementsDatabase : BasePlugin
                 // Print both ID and message to the console
                 player.PrintToConsole("ID: " + id + ", Message: " + message + "Location" + location + "\n");
             }
+            return;
         }
 
         if (command.ArgByIndex(1) == "add")
         {
-            if (command.ArgCount >= 4 && command.ArgCount <= 4)
+            if (command.ArgCount >= 4 && command.ArgCount <= 6)
             {
-                g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`, `location`) VALUES ('{command.ArgByIndex(2)}', '{command.ArgByIndex(3)}');");
-
-                ReloadAdvertisements();
-
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully added {command.ArgByIndex(2)}");
+                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message> <location>, <port>");
+                return;
             }
-            else
-            {
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message> <location>");
-            }
+
+            string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
+
+            g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`, `location`, server) VALUES ('{command.ArgByIndex(2)}', '{command.ArgByIndex(3)}', '{port}');");
+
+            ReloadAdvertisements();
+
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully added {command.ArgByIndex(2)}");
+            return;
         }
 
         if (command.ArgByIndex(1) == "edit")
         {
-            if (command.ArgCount >= 3 && command.ArgCount <= 4)
-            {
-                g_Db!.ExecuteNonQueryAsync($"UPDATE `advertisements` SET message = '{command.ArgByIndex(3)}' WHERE id = '{command.ArgByIndex(2)}'");
-
-                ReloadAdvertisements();
-
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully edit {command.ArgByIndex(2)}");
-            }
-            else
+            if (command.ArgCount < 3 || command.ArgCount > 4)
             {
                 player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements edit <id> <message>");
+                return;
             }
+
+            g_Db!.ExecuteNonQueryAsync($"UPDATE `advertisements` SET message = '{command.ArgByIndex(3)}' WHERE id = '{command.ArgByIndex(2)}'");
+
+            ReloadAdvertisements();
+
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully edit {command.ArgByIndex(2)}");
+            return;
         }
 
         if (command.ArgByIndex(1) == "remove" && command.ArgByIndex(1) == "delete")
         {
-            if (command.ArgCount >= 3 && command.ArgCount <= 3)
-            {
-                g_Db!.ExecuteNonQueryAsync($"DELETE FROM `advertisements` WHERE `id` = '{command.ArgByIndex(2)}';");
-
-                ReloadAdvertisements();
-
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully Removed {command.ArgByIndex(2)}");
-            }
-            else
+            if (command.ArgCount != 3)
             {
                 player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements remove <id>");
+                return;
             }
+
+            g_Db!.ExecuteNonQueryAsync($"DELETE FROM `advertisements` WHERE `id` = '{command.ArgByIndex(2)}';");
+
+            ReloadAdvertisements();
+
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} Successfully Removed {command.ArgByIndex(2)}");
+            return;
         }
 
         if (command.ArgByIndex(1) == "reload")
@@ -122,7 +126,10 @@ public class AdvertisementsDatabase : BasePlugin
     {
         g_AdvertisementsList.Clear();
 
-        var results = g_Db!.ExecuteQuery("select * from advertisements");
+        string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
+
+        var results = g_Db!.ExecuteQuery($"select * from `advertisements` where `server` = '{port}' or `server` is null;");
+
         foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
         {
             string message = pair.Value["message"]!.ToString();
@@ -134,7 +141,10 @@ public class AdvertisementsDatabase : BasePlugin
 
     private void GetAdvertisements()
     {
-        var results = g_Db!.ExecuteQuery("select * from advertisements");
+        string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
+
+        var results = g_Db!.ExecuteQuery($"select * from `advertisements` where `server` = '{port}' or `server` is null;");
+
         foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
         {
             string message = pair.Value["message"]!.ToString();
@@ -160,7 +170,7 @@ public class AdvertisementsDatabase : BasePlugin
 
         foreach (CCSPlayerController player in players)
         {
-            if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot) continue;
+            if (!ValidClient(player)) continue;
 
             Advertisement advertisement = (Advertisement)g_AdvertisementsList[currentAdIndex]!;
 
@@ -180,6 +190,12 @@ public class AdvertisementsDatabase : BasePlugin
 
             currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
         }
+    }
+
+    private bool ValidClient(CCSPlayerController player)
+    {
+        if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot) return false;
+        return true;
     }
 
     private string ReplaceMessageTags(string message, CCSPlayerController player)
