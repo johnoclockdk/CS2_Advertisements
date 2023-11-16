@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
@@ -12,7 +11,7 @@ namespace AdvertisementsDatabase;
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "1.2";
+    public override string ModuleVersion => "1.5";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
@@ -23,7 +22,7 @@ public class AdvertisementsDatabase : BasePlugin
     {
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
-        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL, `server` VARCHAR(128) ,PRIMARY KEY (`id`));").Result);
+        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL, `server` VARCHAR(128), `flags` VARCHAR(128) NOT NULL ,PRIMARY KEY (`id`));").Result);
 
         GetAdvertisements();
 
@@ -125,35 +124,32 @@ public class AdvertisementsDatabase : BasePlugin
     private void ReloadAdvertisements()
     {
         g_AdvertisementsList.Clear();
-
-        string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
-
-        var results = g_Db!.ExecuteQuery($"select * from `advertisements` where `server` = '{port}' or `server` is null;");
-
-        foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
-        {
-            string message = pair.Value["message"]!.ToString();
-            string location = pair.Value["location"]!.ToString();
-
-            g_AdvertisementsList.Add(new Advertisement(message, location));
-        }
+        FetchAdvertisements();
     }
 
     private void GetAdvertisements()
     {
-        string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
+        FetchAdvertisements();
+        base.AddTimer(Cfg.Config.Timer, Timer_Advertisements, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+    }
 
-        var results = g_Db!.ExecuteQuery($"select * from `advertisements` where `server` = '{port}' or `server` is null;");
+    private void FetchAdvertisements()
+    {
+        string currentServerPort = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
+        var results = g_Db!.ExecuteQuery("select * from `advertisements`");
 
         foreach (KeyValuePair<int, MySqlFieldValue> pair in results)
         {
-            string message = pair.Value["message"]!.ToString();
-            string location = pair.Value["location"]!.ToString();
+            string serverPorts = pair.Value["server"]?.ToString() ?? "";
 
-            g_AdvertisementsList.Add(new Advertisement(message, location));
+            if (string.IsNullOrEmpty(serverPorts) || serverPorts.Split(',').Select(p => p.Trim()).Contains(currentServerPort))
+            {
+                string message = pair.Value["message"]!.ToString();
+                string location = pair.Value["location"]!.ToString();
+
+                g_AdvertisementsList.Add(new Advertisement(message, location));
+            }
         }
-
-        base.AddTimer(Cfg.Config.Timer, Timer_Advertisements, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
     }
 
     private int currentAdIndex = 0;
