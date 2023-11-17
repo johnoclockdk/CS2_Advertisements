@@ -1,7 +1,7 @@
 # Advertisements Database Plugin
 
 ## Description
-The Advertisements Database plugin is designed for Counter-Strike: Source (CSS) servers. It allows you to manage and display advertisements stored in a database at specified intervals.
+The Advertisements Database plugin is designed for Counter-Strike: 2 (CS2) servers. It allows you to manage and display advertisements stored in a database at specified intervals.
 
 ## Requirements
 To use this plugin, you need to have the following requirements installed:
