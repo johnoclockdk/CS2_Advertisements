@@ -22,7 +22,7 @@ public class AdvertisementsDatabase : BasePlugin
     {
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
-        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL ,`location` VARCHAR(128) NOT NULL, `server` VARCHAR(128), `flags` VARCHAR(128) NOT NULL ,PRIMARY KEY (`id`));").Result);
+        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,`location` VARCHAR(128),`server` VARCHAR(512),PRIMARY KEY (`id`));").Result);
 
         GetAdvertisements();
 
@@ -31,7 +31,7 @@ public class AdvertisementsDatabase : BasePlugin
 
     [ConsoleCommand("css_adv", "advertisements command")]
     [ConsoleCommand("css_advertisements", "advertisements command")]
-    [RequiresPermissions("@css/slay", "@adv/adv")]
+    [RequiresPermissionsOr("@css/slay", "@adv/adv")]
     public void OnCommand(CCSPlayerController? player, CommandInfo command)
     {
         if (!ValidClient(player)) return;
@@ -65,15 +65,13 @@ public class AdvertisementsDatabase : BasePlugin
 
         if (command.ArgByIndex(1) == "add")
         {
-            if (command.ArgCount >= 4 && command.ArgCount <= 6)
+            if (command.ArgCount < 3 || command.ArgCount > 5)
             {
-                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message> <location>, <port>");
+                player.PrintToChat($"{Cfg.Config.ChatPrefix} Usage: css_advertisements add <message> <location> [<port>]");
                 return;
             }
 
-            string port = ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString();
-
-            g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`, `location`, server) VALUES ('{command.ArgByIndex(2)}', '{command.ArgByIndex(3)}', '{port}');");
+            g_Db!.ExecuteNonQueryAsync($"INSERT INTO `advertisements` (`message`, `location`, server) VALUES ('{command.ArgByIndex(2)}', '{command.ArgByIndex(3)}', '{command.ArgByIndex(4)}');");
 
             ReloadAdvertisements();
 
