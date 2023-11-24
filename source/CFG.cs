@@ -77,7 +77,7 @@ internal class Cfg
     {
         if (!msg.Contains('{'))
         {
-            return string.IsNullOrEmpty(msg) ? "[Advertisements]" : msg;
+            return string.IsNullOrEmpty(msg) ? "" : msg;
         }
 
         string modifiedValue = msg;
