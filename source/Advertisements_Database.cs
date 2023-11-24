@@ -188,7 +188,7 @@ public class AdvertisementsDatabase : BasePlugin
 
     private bool ValidClient(CCSPlayerController player)
     {
-        if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot) return false;
+        if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsHLTV || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot) return false;
         return true;
     }
 
@@ -203,6 +203,7 @@ public class AdvertisementsDatabase : BasePlugin
             .Replace("{NAME}", player.PlayerName)
             .Replace("{STEAMID}", player.SteamID.ToString())
             .Replace("{PLAYERCOUNT}", Utilities.GetPlayers().Count.ToString())
+            .Replace("{MAXPLAYERS}", Server.MaxPlayers.ToString())
             .Replace("{IP}", ConVar.Find("ip")!.StringValue)
             .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString());
 
