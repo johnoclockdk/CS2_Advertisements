@@ -1,6 +1,7 @@
 using System.Collections;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -8,10 +9,11 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using Nexd.MySQL;
 
 namespace AdvertisementsDatabase;
+[MinimumApiVersion(71)]
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "1.5";
+    public override string ModuleVersion => "1.7";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
@@ -217,19 +219,25 @@ public class AdvertisementsDatabase : BasePlugin
     static readonly Dictionary<string, string> colorReplacements = new Dictionary<string, string>
     {
         { "{DEFAULT}", "\x01" },
-        { "{RED}", "\x02" },
+        { "{WHITE}", "\x01" },
+        { "{DARKRED}", "\x02" },
         { "{LIGHTPURPLE}", "\x03" },
         { "{GREEN}", "\x04" },
-        { "{LIME}", "\x05" },
-        { "{LIGHTGREEN}", "\x06" },
-        { "{LIGHTRED}", "\x07" },
-        { "{GRAY}", "\x08" },
-        { "{LIGHTOLIVE}", "\x09" },
-        { "{OLIVE}", "\x10" },
+        { "{OLIVE}", "\x05" },
+        { "{LIME}", "\x06" },
+        { "{RED}", "\x07" },
+        { "{GREY}", "\x08" },
+        { "{LIGHTYELLOW}", "\x09" },
+        { "{YELLOW}", "\x09" },
+        { "{SILVER}", "\x0A" },
+        { "{BLUEGREY}", "\x0A" },
         { "{LIGHTBLUE}", "\x0B" },
-        { "{BLUE}", "\x0C" },
+        { "{BLUE}", "\x0B" },
+        { "{DARKBLUE}", "\x0C" },
+        { "{LIGHTRED}", "\x0F" },
         { "{PURPLE}", "\x0E" },
-        { "{GRAYBLUE}", "\x0A" }
+        { "{MAGENTA}", "\x0E" },
+        { "{GOLD}", "\x10" }
     };
 }
 
