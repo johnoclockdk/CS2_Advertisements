@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
@@ -13,7 +14,7 @@ namespace AdvertisementsDatabase;
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "1.7";
+    public override string ModuleVersion => "1.8";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
@@ -177,11 +178,12 @@ public class AdvertisementsDatabase : BasePlugin
             }
             else if (advertisement.Location == "center")
             {
+                // Handle advertisements with location "center"
                 player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
             }
             else if (advertisement.Location == "panel")
             {
-                // Handle advertisements with location "panel" (if needed)
+                // Handle advertisements with location "panel"
             }
 
             currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
@@ -207,7 +209,8 @@ public class AdvertisementsDatabase : BasePlugin
             .Replace("{PLAYERCOUNT}", Utilities.GetPlayers().Count.ToString())
             .Replace("{MAXPLAYERS}", Server.MaxPlayers.ToString())
             .Replace("{IP}", ConVar.Find("ip")!.StringValue)
-            .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString());
+            .Replace("{PORT}", ConVar.Find("hostport")!.GetPrimitiveValue<int>().ToString())
+            .Replace("{NEWLINE}", "\u2029");
 
         foreach (var pair in colorReplacements)
         {
