@@ -25,6 +25,8 @@ public class AdvertisementsDatabase : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull, HookMode.Post);
+
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
         Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,`location` VARCHAR(128),`server` VARCHAR(512),PRIMARY KEY (`id`));").Result);
@@ -46,6 +48,7 @@ public class AdvertisementsDatabase : BasePlugin
     public void OnCommand(CCSPlayerController? player, CommandInfo command)
     {
         if (!ValidClient(player)) return;
+
 
         if (command.ArgCount == 1)
         {
@@ -196,6 +199,28 @@ public class AdvertisementsDatabase : BasePlugin
 
             currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
         }
+    }
+
+    private HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        if (Cfg.Config.WelcomeEnable == 0) return HookResult.Continue;
+        var player = @event.Userid;
+
+        if (!ValidClient(player)) return HookResult.Continue;
+
+        var msg = ReplaceMessageTags(Cfg.Config.Welcomemsg!, player);
+
+        if (Cfg.Config.WelcomeLocation == "chat")
+        {
+            // Handle advertisements with location "chat"
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(msg, player)}");
+        }
+        else if (Cfg.Config.WelcomeLocation == "center")
+        {
+            // Handle advertisements with location "center"
+            player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(msg, player)}");
+        }
+        return HookResult.Continue;
     }
 
     private bool ValidClient(CCSPlayerController player)
