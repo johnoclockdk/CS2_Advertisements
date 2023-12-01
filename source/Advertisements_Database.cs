@@ -8,18 +8,20 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Nexd.MySQL;
+using CounterStrikeSharp.API.Modules.Timers;
 
 namespace AdvertisementsDatabase;
 [MinimumApiVersion(71)]
 public class AdvertisementsDatabase : BasePlugin
 {
     public override string ModuleName => "Advertisements_Database";
-    public override string ModuleVersion => "1.8";
+    public override string ModuleVersion => "1.9";
     public override string ModuleAuthor => "johnoclock";
     public override string ModuleDescription => "Display Advertisements from database";
 
     private MySqlDb? g_Db = null;
     ArrayList g_AdvertisementsList = new ArrayList();
+    private CounterStrikeSharp.API.Modules.Timers.Timer? timer;
 
     public override void Load(bool hotReload)
     {
@@ -30,6 +32,12 @@ public class AdvertisementsDatabase : BasePlugin
         GetAdvertisements();
 
         Console.WriteLine("Advertisements_Database is loaded");
+    }
+
+    public override void Unload(bool hotReload)
+    {
+        timer!.Kill();
+        Console.WriteLine("Advertisements_Database is unloaded");
     }
 
     [ConsoleCommand("css_adv", "advertisements command")]
@@ -131,7 +139,7 @@ public class AdvertisementsDatabase : BasePlugin
     private void GetAdvertisements()
     {
         FetchAdvertisements();
-        base.AddTimer(Cfg.Config.Timer, Timer_Advertisements, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+        timer = AddTimer(Cfg.Config.Timer, Timer_Advertisements, TimerFlags.REPEAT);
     }
 
     private void FetchAdvertisements()
