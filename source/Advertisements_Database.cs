@@ -30,7 +30,7 @@ public class AdvertisementsDatabase : BasePlugin
 
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
-        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,`location` VARCHAR(128),`server` VARCHAR(512),PRIMARY KEY (`id`));").Result);
+        Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,`location` VARCHAR(128),`server` VARCHAR(512), `server` VARCHAR(512),PRIMARY KEY (`id`));").Result);
 
         GetAdvertisements();
 
@@ -71,9 +71,11 @@ public class AdvertisementsDatabase : BasePlugin
                 string id = pair.Value["id"]!.ToString();
                 string location = pair.Value["location"]!.ToString();
                 string message = pair.Value["message"]!.ToString();
+                string server = pair.Value["server"]!.ToString();
+                string flag = pair.Value["flag"]!.ToString();
 
                 // Print both ID and message to the console
-                player.PrintToConsole("ID: " + id + ", Message: " + message + "Location" + location + "\n");
+                player.PrintToConsole("ID: " + id + ", Message: " + message + ", Location: " + location + ", Port: " + server + ", Flag: " + flag + "\n");
             }
             return;
         }
@@ -159,8 +161,9 @@ public class AdvertisementsDatabase : BasePlugin
             {
                 string message = pair.Value["message"]!.ToString();
                 string location = pair.Value["location"]!.ToString();
+                string flags = pair.Value["flag"]?.ToString() ?? ""; // Assuming 'flag' is the column name for the flag in your database
 
-                g_AdvertisementsList.Add(new Advertisement(message, location));
+                g_AdvertisementsList.Add(new Advertisement(message, location, flags));
             }
         }
     }
@@ -181,22 +184,51 @@ public class AdvertisementsDatabase : BasePlugin
         {
             if (!ValidClient(player)) continue;
 
-            Advertisement advertisement = (Advertisement)g_AdvertisementsList[currentAdIndex]!;
+            var playerPermissions = GetPlayerPermissions(player);
+            var currentAd = g_AdvertisementsList[currentAdIndex] as Advertisement;
 
-            if (advertisement.Location == "chat")
+            var adFlags = currentAd.Flag.Split(',').Select(f => f.Trim());
+
+            if (adFlags.Any(adFlag => string.IsNullOrEmpty(adFlag) || playerPermissions.Contains(adFlag)))
             {
-                // Handle advertisements with location "chat"
+                DisplayAdvertisement(player, currentAd);
+            }
+        }
+
+        // Move to the next advertisement for the next timer tick
+        currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count;
+    }
+
+
+    private void DisplayAdvertisement(CCSPlayerController player, Advertisement advertisement)
+    {
+        // Ensure both player and advertisement are valid
+        if (player == null || advertisement == null)
+        {
+            Console.WriteLine("Invalid player or advertisement.");
+            return;
+        }
+
+        // Display the advertisement based on its specified location
+        switch (advertisement.Location)
+        {
+            case "chat":
+                // Display the advertisement in chat
                 player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
-            }
-            else if (advertisement.Location == "center")
-            {
-                // Handle advertisements with location "center"
-                player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
-            }
+                break;
 
-            currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
+            case "center":
+                // Display the advertisement in the center of the screen
+                player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
+                break;
+
+            default:
+                // Handle unknown locations, perhaps log an error or ignore
+                Console.WriteLine($"Unknown advertisement location: {advertisement.Location}");
+                break;
         }
     }
+
 
     private int panelAdIndex = 0; // New index for panel advertisements
 
@@ -290,16 +322,57 @@ public class AdvertisementsDatabase : BasePlugin
         { "{MAGENTA}", "\x0E" },
         { "{GOLD}", "\x10" }
     };
+
+    private List<string> GetPlayerPermissions(CCSPlayerController player)
+    {
+        // List of all possible permissions
+        string[] allPermissions = new string[]
+        {
+        "@css/reservation",
+        "@css/generic",
+        "@css/kick",
+        "@css/ban",
+        "@css/unban",
+        "@css/vip",
+        "@css/slay",
+        "@css/changemap",
+        "@css/cvar",
+        "@css/config",
+        "@css/chat",
+        "@css/vote",
+        "@css/password",
+        "@css/rcon",
+        "@css/cheats",
+        "@css/root"
+        };
+
+        // List to hold permissions the player has
+        List<string> playerPermissions = new List<string>();
+
+        // Check each permission
+        foreach (string permission in allPermissions)
+        {
+            if (AdminManager.PlayerHasPermissions(player, permission))
+            {
+                playerPermissions.Add(permission);
+            }
+        }
+
+        return playerPermissions;
+    }
+
 }
 
 public class Advertisement
 {
     public string Message { get; set; }
     public string Location { get; set; }
+    public string Flag { get; set; }
 
-    public Advertisement(string message, string location)
+    public Advertisement(string message, string location, string flag)
     {
         Message = message;
         Location = location;
+        Flag = flag;
     }
 }
