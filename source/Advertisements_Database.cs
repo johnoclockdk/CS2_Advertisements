@@ -25,6 +25,9 @@ public class AdvertisementsDatabase : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        RegisterEventHandler<EventCsWinPanelRound>(EventCsWinPanelRound, HookMode.Pre);
+        RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull, HookMode.Post);
+
         new Cfg().CheckConfig(ModuleDirectory);
         g_Db = new(Cfg.Config.DatabaseHost!, Cfg.Config.DatabaseUser!, Cfg.Config.DatabasePassword!, Cfg.Config.DatabaseName!, Cfg.Config.DatabasePort);
         Console.WriteLine(g_Db.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS `advertisements` (`id` INT NOT NULL AUTO_INCREMENT,`message` VARCHAR(1024) NOT NULL,`location` VARCHAR(128),`server` VARCHAR(512),PRIMARY KEY (`id`));").Result);
@@ -46,6 +49,7 @@ public class AdvertisementsDatabase : BasePlugin
     public void OnCommand(CCSPlayerController? player, CommandInfo command)
     {
         if (!ValidClient(player)) return;
+
 
         if (command.ArgCount == 1)
         {
@@ -189,13 +193,49 @@ public class AdvertisementsDatabase : BasePlugin
                 // Handle advertisements with location "center"
                 player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(advertisement.Message, player)}");
             }
-            else if (advertisement.Location == "panel")
-            {
-                // Handle advertisements with location "panel"
-            }
 
             currentAdIndex = (currentAdIndex + 1) % g_AdvertisementsList.Count; // Move to the next ad, reset to 0 at the end of the list.
         }
+    }
+
+    private int panelAdIndex = 0; // New index for panel advertisements
+
+    private HookResult EventCsWinPanelRound(EventCsWinPanelRound handle, GameEventInfo info)
+    {
+        Advertisement advertisement = (Advertisement)g_AdvertisementsList[panelAdIndex]!;
+        List<CCSPlayerController> players = Utilities.GetPlayers();
+        foreach (CCSPlayerController player in players)
+        {
+            if (advertisement.Location == "panel")
+            {
+                // Handle advertisements with location "panel"
+                handle.FunfactToken = ReplaceMessageTags(advertisement.Message, player);
+                handle.TimerTime = 5;
+            }
+        }
+        panelAdIndex = (panelAdIndex + 1) % g_AdvertisementsList.Count; // Update panelAdIndex
+
+        return HookResult.Continue;
+    }
+
+    private HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        if (Cfg.Config.WelcomeEnable == 0) return HookResult.Continue;
+        var player = @event.Userid;
+
+        if (!ValidClient(player)) return HookResult.Continue;
+
+        if (Cfg.Config.WelcomeLocation == "chat")
+        {
+            // Handle advertisements with location "chat"
+            player.PrintToChat($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(Cfg.Config.Welcomemsg!, player)}");
+        }
+        else if (Cfg.Config.WelcomeLocation == "center")
+        {
+            // Handle advertisements with location "center"
+            player.PrintToCenter($"{Cfg.Config.ChatPrefix} {ReplaceMessageTags(Cfg.Config.Welcomemsg!, player)}");
+        }
+        return HookResult.Continue;
     }
 
     private bool ValidClient(CCSPlayerController player)

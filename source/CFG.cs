@@ -61,7 +61,10 @@ internal class Cfg
             DatabasePort = 3306,
             DatabaseUser = "root",
             DatabasePassword = "myawsomepassword",
-            DatabaseName = "Advertisements"
+            DatabaseName = "Advertisements",
+            WelcomeEnable = 0,
+            Welcomemsg = "hello",
+            WelcomeLocation = "chat"
         };
 
         // Serialize the config object to JSON and write it to the file.
@@ -103,5 +106,7 @@ internal class Config
     public string? DatabasePassword { get; set; }
     public string? DatabaseName { get; set; }
     public float Timer { get; set; }
-
+    public int? WelcomeEnable { get; set; }
+    public string? Welcomemsg { get; set; }
+    public string? WelcomeLocation { get; set; }
 }
