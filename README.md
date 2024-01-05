@@ -61,7 +61,7 @@ Message tags are used to dynamically insert specific information into messages. 
 - `{IP}`: Shows the server's IP address.
 - `{PLAYERCOUNT}` : Shows the Current player count.
 - `{PORT}`: Includes the server's port number.
-
+- `{NEWLINE}`: Create a newline in the message
 
 ## Usage Instructions
 
