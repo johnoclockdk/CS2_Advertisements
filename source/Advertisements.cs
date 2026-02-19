@@ -4,7 +4,7 @@ using Nexd.MySQL;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace Advertisements;
-[MinimumApiVersion(240)]
+[MinimumApiVersion(340)]
 public partial class AdvertisementsCore : BasePlugin, IPluginConfig<AdvertisementConfig>
 {
     public override string ModuleName => "Advertisements";

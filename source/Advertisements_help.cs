@@ -161,7 +161,7 @@ public partial class AdvertisementsCore
 
     private bool ValidClient(CCSPlayerController player)
     {
-        if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsHLTV || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot || player.Slot == 65535) return false;
+        if (player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsHLTV || player.PlayerPawn == null || !player.PlayerPawn.IsValid || player.UserId == -1 || player.IsBot || player.Slot == 65535) return false;
         return true;
     }
 

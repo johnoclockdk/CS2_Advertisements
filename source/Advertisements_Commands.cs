@@ -15,12 +15,12 @@ public partial class AdvertisementsCore
 
         if (command.ArgCount == 1)
         {
-            player.PrintToChat($" {ModifyColorValue(Config.ChatPrefix!)} Please provide one argment");
-            player.PrintToChat("- reload");
-            player.PrintToChat("- add");
-            player.PrintToChat("- edit");
-            player.PrintToChat("- remove or delete");
-            player.PrintToChat("- list");
+            player?.PrintToChat($" {ModifyColorValue(Config.ChatPrefix!)} Please provide one argment");
+            player?.PrintToChat("- reload");
+            player?.PrintToChat("- add");
+            player?.PrintToChat("- edit");
+            player?.PrintToChat("- remove or delete");
+            player?.PrintToChat("- list");
         }
     }
 
